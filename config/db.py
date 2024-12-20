@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Define the connection URL to the MySQL database
-DATABASE_URL = "mysql+pymysql://root:@localhost:3306/car_maintenance_api"
+DATABASE_URL = "mysql+pymysql://root123:none@localhost:3306/car_maintenance_api"
 
 # Create the base class for the ORM models
 Base = declarative_base()

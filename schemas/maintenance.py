@@ -34,14 +34,6 @@ class UpdateMaintenanceDTO(BaseModel):
     class Config:
         from_attributes = True
 
-class MonthlyRequestReportRequestDTO(BaseModel):
-    garageId: int  # The ID of the garage
-    startMonth: str  # Start month in 'YYYY-MM' format
-    endMonth: str  # End month in 'YYYY-MM' format
-
-    class Config:
-        from_attributes = True
-
 class MonthlyRequestReportDTO(BaseModel):
     yearMonth: str  # The year-month for which the report is generated, in 'YYYY-MM' format
     requests: int  # Total requests for the month

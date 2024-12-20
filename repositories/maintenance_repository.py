@@ -1,8 +1,9 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from models.maintenance import Maintenance
 from datetime import datetime
 from datetime import date
-from typing import List
+from typing import List, Tuple
 
 class MaintenanceRepository:
     def __init__(self, db: Session):
@@ -39,29 +40,6 @@ class MaintenanceRepository:
         self.db.commit()
         return maintenance
 
-    def get_monthly_request_report(self, garage_id: int, start_month: str, end_month: str, db: Session ):
-        # Convert the start and end months to datetime objects
-        start_date = datetime.strptime(start_month + '-01', "%Y-%m-%d")
-        end_date = datetime.strptime(end_month + '-01', "%Y-%m-%d")
-
-        # Query the database for the number of requests for each month in the range
-        query = db.query(Maintenance.scheduled_date).filter(
-            Maintenance.garage_id == garage_id,
-            Maintenance.scheduled_date >= start_date,
-            Maintenance.scheduled_date <= end_date
-        ).all()
-
-        # Process the query results to count the requests per month
-        monthly_data = {}
-        for maintenance in query:
-            year_month = maintenance.date.strftime('%Y-%m')
-            if year_month not in monthly_data:
-                monthly_data[year_month] = 0
-            monthly_data[year_month] += 1
-
-        # Convert the dictionary into a sorted list of tuples
-        return sorted(monthly_data.items())
-
     def list_maintenance(self, car_id: int, garage_id: int, start_date: date, end_date: date) -> List[Maintenance]:
         query = self.db.query(Maintenance)
         if car_id:
@@ -73,3 +51,23 @@ class MaintenanceRepository:
         if end_date:
             query = query.filter(Maintenance.scheduled_date <= end_date)
         return query.all()
+
+    def get_monthly_request_report(self, garage_id: int, start_month: str, end_month: str) -> List[Tuple[str, int]]:
+        # Convert strings into datetime for comparison
+        start_date = datetime.strptime(start_month, "%Y-%m")
+        end_date = datetime.strptime(end_month, "%Y-%m")
+
+        # Query for the monthly data based on garage_id, start_date, and end_date
+        query = (
+            self.db.query(
+                func.date_trunc('month', Maintenance.scheduled_date).label('yearMonth'),
+                func.count(Maintenance.id).label('requests')
+            )
+            .filter(Maintenance.garage_id == garage_id)
+            .filter(Maintenance.scheduled_date >= start_date)
+            .filter(Maintenance.scheduled_date <= end_date)
+            .group_by(func.date_trunc('month', Maintenance.scheduled_date))
+            .order_by(func.date_trunc('month', Maintenance.scheduled_date))
+            .all()
+        )
+        return query

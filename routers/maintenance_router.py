@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from schemas.maintenance import CreateMaintenanceDTO, ResponseMaintenanceDTO
-from schemas.maintenance import MonthlyRequestReportDTO, MonthlyRequestReportRequestDTO
+from schemas.maintenance import MonthlyRequestReportDTO
 from services.maintenance_service import MaintenanceService
 from repositories.maintenance_repository import MaintenanceRepository
 from config.db import get_db
@@ -13,30 +13,6 @@ from schemas.maintenance import ResponseMaintenanceDTO
 
 router = APIRouter(prefix="/api/maintenance", tags=["Maintenances"])
 
-
-@router.get("/", response_model=List[ResponseMaintenanceDTO])
-def list_maintenance( carId: int = Query(None, description="Filter by car ID"),
-    garageId: int = Query(None, description="Filter by garage ID"),
-    startDate: date = Query(None, description="Filter by start date"),
-    endDate: date = Query(None, description="Filter by end date"),
-    db: Session = Depends(get_db)):
-    """
-    Retrieve a list of maintenance records, optionally filtered by car ID, garage ID,
-    and date range.
-    """
-    service = MaintenanceService(MaintenanceRepository(db))
-    try:
-        maintenances = service.get_maintenance_records(
-            car_id=carId,
-            garage_id=garageId,
-            start_date=startDate,
-            end_date=endDate,
-        )
-        return maintenances
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Get a specific maintenance by ID
 @router.get("/{maintenance_id}", response_model=ResponseMaintenanceDTO)
 def get_maintenance(maintenance_id: int, db: Session = Depends(get_db)):
     service = MaintenanceService(MaintenanceRepository(db))
@@ -69,12 +45,13 @@ def delete_maintenance(maintenance_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Maintenance not found")
     return deleted_maintenance
 
-@router.post("/monthly-requests-report", response_model=list[MonthlyRequestReportDTO])
-def get_monthly_request_report(
-    report_request: MonthlyRequestReportRequestDTO, db: Session = Depends(get_db)
+@router.get("/monthlyRequestsReport", response_model=List[MonthlyRequestReportDTO])
+async def get_monthly_request_report_route(
+    garage_id: int = Query(..., description="The ID of the garage"),
+    start_month: str = Query(..., description="Start month in 'YYYY-MM' format"),
+    end_month: str = Query(..., description="End month in 'YYYY-MM' format"),
+    db: Session = Depends(get_db)  # Dependency for database session
 ):
-    service = MaintenanceService(MaintenanceRepository(db))
-    report = service.get_monthly_request_report(
-        report_request.garageId, report_request.startMonth, report_request.endMonth, db
-    )
-    return report
+    # Instantiate the service and get the monthly report
+    service = MaintenanceService(db)
+    return service.get_monthly_request_report(garage_id, start_month, end_month)

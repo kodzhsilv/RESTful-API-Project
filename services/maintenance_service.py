@@ -35,17 +35,13 @@ class MaintenanceService:
             return None
         return self.repository.delete_maintenance(maintenance_id)
 
-    def get_monthly_request_report(
-        self, garage_id: int, start_month: str, end_month: str, db: Session
-    ):
-        # Get the monthly data from the repository
-        monthly_data = self.repository.get_monthly_request_report(garage_id, start_month, end_month, db)
+    def get_monthly_request_report(self, garage_id: int, start_month: str, end_month: str) -> List[
+        MonthlyRequestReportDTO]:
+        # Call the repository to fetch the data
+        monthly_data = self.repository.get_monthly_request_report(garage_id, start_month, end_month)
 
-        # Convert the result into the response DTO
+        # Convert the data into MonthlyRequestReportDTO
         return [
             MonthlyRequestReportDTO(yearMonth=month, requests=requests)
             for month, requests in monthly_data
         ]
-
-    def get_maintenance_records(self, car_id: int, garage_id: int, start_date: date, end_date: date):
-        return self.repository.list_maintenance(car_id, garage_id, start_date, end_date)
