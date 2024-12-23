@@ -3,7 +3,10 @@ from sqlalchemy.orm import Session
 from models.maintenance import Maintenance
 from datetime import datetime
 from datetime import date
-from typing import List, Tuple
+from typing import List, Tuple, Dict
+
+from schemas.maintenance import CreateMaintenanceDTO
+
 
 class MaintenanceRepository:
     def __init__(self, db: Session):
@@ -15,11 +18,19 @@ class MaintenanceRepository:
     def get_maintenance(self, maintenance_id: int):
         return self.db.query(Maintenance).filter(Maintenance.id == maintenance_id).first()
 
-    def create_maintenance(self, maintenance_data: dict):
-        new_maintenance = Maintenance(**maintenance_data)
+    def create_maintenance(self, maintenance_data: CreateMaintenanceDTO):
+        # Convert the Pydantic model directly to the database model
+        new_maintenance = Maintenance(
+            car_id=maintenance_data.car_id,
+            garage_id=maintenance_data.garage_id,
+            service_type=maintenance_data.service_type,
+            scheduled_date=maintenance_data.scheduled_date
+        )
+
+        # Add the new maintenance record to the session
         self.db.add(new_maintenance)
         self.db.commit()
-        self.db.refresh(new_maintenance)
+
         return new_maintenance
 
     def update_maintenance(self, maintenance_id: int, maintenance_data: dict):

@@ -1,5 +1,3 @@
-from gc import garbage
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers.car_router import router as car_router
@@ -10,7 +8,7 @@ app = FastAPI()
 
 # List of allowed origins (frontend URL)
 origins = [
-    "http://192.168.1.6:3000",  # Frontend URL
+    "http://localhost:3000",  # Frontend URL
 ]
 
 # Add CORS middleware to allow cross-origin requests

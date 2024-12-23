@@ -21,3 +21,12 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# Dependency to get the database session
+def get_db_session():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

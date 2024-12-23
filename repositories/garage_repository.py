@@ -1,3 +1,5 @@
+from typing import List
+
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from models.garage import Garage
@@ -10,8 +12,13 @@ class GarageRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list_garages(self):
-        return self.db.query(Garage).all()
+    def list_garages(self, city: str = None) -> List[Garage]:
+        query = self.db.query(Garage)
+        if city:
+            query = query.filter(Garage.city == city)
+        return query.all()
+ #  def list_garages(self):
+ #      return self.db.query(Garage).all()
 
     def get_garage(self, garage_id: int):
         return self.db.query(Garage).filter(Garage.id == garage_id).first()

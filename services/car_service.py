@@ -1,4 +1,5 @@
 from repositories.car_repository import CarRepository
+from schemas.car import CreateCarDTO
 
 class CarService:
     def __init__(self, repository: CarRepository):
@@ -11,7 +12,6 @@ class CarService:
         return self.repository.get_car(car_id)
 
     def create_car(self, car_data: dict):
-        # Add any business logic here before saving the car
         return self.repository.create_car(car_data)
 
     def update_car(self, car_id: int, car_data: dict):

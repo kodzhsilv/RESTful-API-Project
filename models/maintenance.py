@@ -6,10 +6,10 @@ class Maintenance(Base):
     __tablename__ = "maintenances"
 
     id = Column(Integer, primary_key=True, index=True)
-    car_id = Column(Integer, ForeignKey("cars.id"))  # Foreign key to Car model
-    garage_id = Column(Integer, ForeignKey("garages.id"))  # Foreign key to Garage model
-    service_type = Column(String)
-    scheduled_date = Column(Date)
+    carId = Column(Integer, ForeignKey("cars.id"))  # Foreign key to Car model
+    garageId = Column(Integer, ForeignKey("garages.id"))  # Foreign key to Garage model
+    serviceType = Column(String(255))
+    scheduledDate = Column(Date)
 
 
     # Relationships
@@ -17,4 +17,4 @@ class Maintenance(Base):
     garage = relationship("Garage", back_populates="maintenances")
 
     def __repr__(self):
-        return f"<Maintenance(service_type={self.service_type}, scheduled_date={self.scheduled_date}, car_id={self.car_id}, garage_id={self.garage_id})>"
+        return f"<Maintenance(service_type={self.serviceType}, scheduled_date={self.scheduledDate}, car_id={self.carId}, garage_id={self.garageId})>"

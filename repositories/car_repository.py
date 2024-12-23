@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from schemas.car import CreateCarDTO, UpdateCarDTO
 from models.car import Car
 
 class CarRepository:
@@ -11,19 +12,29 @@ class CarRepository:
     def get_car(self, car_id: int):
         return self.db.query(Car).filter(Car.id == car_id).first()
 
-    def create_car(self, car_data: dict):
+    def create_car(self, car_data: dict) -> Car:
         new_car = Car(**car_data)
         self.db.add(new_car)
         self.db.commit()
         self.db.refresh(new_car)
         return new_car
 
-    def update_car(self, car_id: int, car_data: dict):
-        car = self.get_car(car_id)
+    def get_by_id(self, car_id: int):
+        """Retrieve a car by its ID."""
+        return self.db.query(Car).filter(Car.id == car_id).first()
+
+    def update_car(self, car_id: int, car_data: UpdateCarDTO):
+        car = self.get_by_id(car_id)
         if not car:
-            return None
-        for key, value in car_data.items():
+            raise ValueError(f"Car with ID {car_id} does not exist.")
+
+        # Convert Pydantic model to dictionary
+        car_data_dict = car_data.dict(exclude_unset=True)  # Only include fields that are set
+
+        # Update attributes
+        for key, value in car_data_dict.items():
             setattr(car, key, value)
+
         self.db.commit()
         self.db.refresh(car)
         return car
