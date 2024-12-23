@@ -1,12 +1,10 @@
 from typing import List
-
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
 from models.garage import Garage
 from datetime import date, timedelta
 from models.maintenance import Maintenance
 from fastapi import HTTPException
-from schemas.garage import UpdateGarageDTO
 
 class GarageRepository:
     def __init__(self, db: Session):
@@ -17,8 +15,6 @@ class GarageRepository:
         if city:
             query = query.filter(Garage.city == city)
         return query.all()
- #  def list_garages(self):
- #      return self.db.query(Garage).all()
 
     def get_garage(self, garage_id: int):
         return self.db.query(Garage).filter(Garage.id == garage_id).first()
@@ -56,7 +52,6 @@ class GarageRepository:
 
         capacity = garage.capacity
 
-        # Step 2: Query maintenance data
         maintenance_query = (
             db.query(
                 Maintenance.scheduled_date.label("date"),
@@ -71,10 +66,8 @@ class GarageRepository:
             .all()
         )
 
-        # Step 3: Map requests by date
         requests_by_date = {record.date: record.requests for record in maintenance_query}
 
-        # Step 4: Generate the availability report
         report = []
         current_date = start_date
         while current_date <= end_date:

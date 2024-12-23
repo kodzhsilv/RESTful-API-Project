@@ -64,11 +64,8 @@ class MaintenanceRepository:
         return query.all()
 
     def get_monthly_request_report(self, garage_id: int, start_month: str, end_month: str) -> List[Tuple[str, int]]:
-        # Convert strings into datetime for comparison
         start_date = datetime.strptime(start_month, "%Y-%m")
         end_date = datetime.strptime(end_month, "%Y-%m")
-
-        # Query for the monthly data based on garage_id, start_date, and end_date
         query = (
             self.db.query(
                 func.date_trunc('month', Maintenance.scheduled_date).label('yearMonth'),

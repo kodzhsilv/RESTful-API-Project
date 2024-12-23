@@ -20,21 +20,15 @@ class CarRepository:
         return new_car
 
     def get_by_id(self, car_id: int):
-        """Retrieve a car by its ID."""
         return self.db.query(Car).filter(Car.id == car_id).first()
 
     def update_car(self, car_id: int, car_data: UpdateCarDTO):
         car = self.get_by_id(car_id)
         if not car:
             raise ValueError(f"Car with ID {car_id} does not exist.")
-
-        # Convert Pydantic model to dictionary
-        car_data_dict = car_data.dict(exclude_unset=True)  # Only include fields that are set
-
-        # Update attributes
+        car_data_dict = car_data.dict(exclude_unset=True)
         for key, value in car_data_dict.items():
             setattr(car, key, value)
-
         self.db.commit()
         self.db.refresh(car)
         return car

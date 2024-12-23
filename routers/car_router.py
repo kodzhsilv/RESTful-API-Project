@@ -1,37 +1,36 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
-
 from models.car import Car
 from models.garage import Garage
 from schemas.car import ResponseCarDTO, CreateCarDTO, UpdateCarDTO
 from services.car_service import CarService
 from repositories.car_repository import CarRepository
 from config.db import get_db, get_db_session
-
 router = APIRouter(prefix="/cars", tags=["Cars"])
 
 @router.get("", response_model=list[ResponseCarDTO])
 async def list_cars(
     carMake: Optional[str] = None,
     garageId: Optional[int] = None,
+    fromYear: Optional[int] = None,
+    toYear: Optional[int] = None,
     db: Session = Depends(get_db_session),
 ):
-    """
-    List cars with optional filters by car make or garage ID.
-    """
-    # Base query for cars
+
     query = db.query(Car)
 
-    # Apply filters
     if carMake:
         query = query.filter(Car.make.ilike(f"%{carMake}%"))
     if garageId:
-        query = query.filter(Car.garageIds.any(garageId))  # Assuming garageIds is a list
+        query = query.filter(Car.garageIds.any(garageId))
+
+    if fromYear:
+        query = query.filter(Car.productionYear >= fromYear)
+    if toYear:
+        query = query.filter(Car.productionYear <= toYear)
 
     cars = query.all()
-
-    # Fetch all garages and map them by ID
     all_garages = db.query(Garage).all()
     garage_map = {
         garage.id: {
@@ -43,7 +42,6 @@ async def list_cars(
         for garage in all_garages
     }
 
-    # Prepare the response
     response = []
     for car in cars:
         garages = [
@@ -69,18 +67,10 @@ async def list_cars(
         )
 
     return response
-#def list_cars(db: Session = Depends(get_db)):
-#    service = CarService(CarRepository(db))
-#    return service.list_cars()
 
 
 @router.get("/{car_id}", response_model=ResponseCarDTO)
-#def get_car(car_id: int, db: Session = Depends(get_db)):
- #   service = CarService(CarRepository(db))
-  #  car = service.get_car(car_id)
-   # if not car:
-    #    raise HTTPException(status_code=404, detail="Car not found")
-    #return car
+
 async def get_car(car_id: int, db: Session = Depends(get_db_session)):
     car = db.query(Car).filter(Car.id == car_id).first()
     if not car:
@@ -91,13 +81,9 @@ async def get_car(car_id: int, db: Session = Depends(get_db_session)):
         "model": car.model,
         "productionYear": car.productionYear,
         "licensePlate": car.licensePlate,
-        "garageIds": [garage.id for garage in car.garages],  # Return garage IDs
+        "garageIds": [garage.id for garage in car.garages],
     }
 
-#@router.post("", response_model=ResponseCarDTO)
-#def create_car(car: CreateCarDTO, db: Session = Depends(get_db)):
- #   service = CarService(CarRepository(db))
-  #  return service.create_car(car.dict())#
 @router.post("", response_model=ResponseCarDTO)
 async def create_car(car: CreateCarDTO, db: Session = Depends(get_db)):
     new_car = Car(
@@ -105,7 +91,7 @@ async def create_car(car: CreateCarDTO, db: Session = Depends(get_db)):
         model=car.model,
         productionYear=car.productionYear,
         licensePlate=car.licensePlate,
-        garageIds=car.garageIds  # Store the array of garage IDs
+        garageIds=car.garageIds
     )
     db.add(new_car)
     db.commit()

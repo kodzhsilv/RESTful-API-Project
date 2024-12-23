@@ -1,11 +1,7 @@
-from typing import List
-
 from sqlalchemy import Column, Integer, String, ForeignKey, Table, ARRAY, JSON
 from sqlalchemy.orm import relationship
 from models.base import Base
 
-
-# Association table for many-to-many relationship
 car_garage_association = Table(
     "car_garage",
     Base.metadata,
@@ -22,7 +18,6 @@ class Car(Base):
     licensePlate = Column(String(255), unique=True, index=True)
     garageIds = Column(JSON, nullable=True)
     # Relationship to Garage model
-    #garage = relationship('Garage', back_populates='cars')
 
     garages = relationship('Garage', secondary=car_garage_association, back_populates='cars')
     maintenances = relationship("Maintenance", back_populates="car")

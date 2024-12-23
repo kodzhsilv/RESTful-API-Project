@@ -1,19 +1,11 @@
-from sqlalchemy import cast, Date
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import date, datetime
-from sqlalchemy.orm import Session, joinedload
-import schemas.maintenance
-from models.car import Car
-from schemas.maintenance import CreateMaintenanceDTO
-from config import db
-from models.car import Car
-from models.garage import Garage
 from schemas.maintenance import CreateMaintenanceDTO, ResponseMaintenanceDTO
 from schemas.maintenance import MonthlyRequestsReportDTO, UpdateMaintenanceDTO, YearMonth
 from services.maintenance_service import MaintenanceService, get_request_count_for_month, is_leap_year, get_month_value
 from repositories.maintenance_repository import MaintenanceRepository
 from config.db import get_db
-from typing import List, cast  # Add this import
+from typing import List
 from typing import Optional
 from fastapi import Query
 from sqlalchemy.orm import Session
@@ -75,7 +67,6 @@ def get_maintenance(maintenance_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Maintenance not found")
     return maintenance
 
-# Create a new maintenance record
 @router.post("", response_model=ResponseMaintenanceDTO)
 async def create_maintenance(maintenance: CreateMaintenanceDTO, db: Session = Depends(get_db)):
     db_maintenance = Maintenance(**maintenance.dict())
@@ -83,15 +74,14 @@ async def create_maintenance(maintenance: CreateMaintenanceDTO, db: Session = De
     db.commit()
     db.refresh(db_maintenance)
 
-    # Assuming db_maintenance has relationships with `car` and `garage`
     return ResponseMaintenanceDTO(
         id=db_maintenance.id,
         serviceType=db_maintenance.serviceType,
         scheduledDate=db_maintenance.scheduledDate,
-        carId=db_maintenance.carId,  # Assuming you have a foreign key to `car`
-        garageId=db_maintenance.garageId,  # Assuming you have a foreign key to `garage`
-        carName=db_maintenance.car.make,  # Access the related car's `name`
-        garageName=db_maintenance.garage.name  # Access the related garage's `name`
+        carId=db_maintenance.carId,
+        garageId=db_maintenance.garageId,
+        carName=db_maintenance.car.make,
+        garageName=db_maintenance.garage.name
     )
 
 @router.put("/{maintenance_id}", response_model=ResponseMaintenanceDTO)
@@ -100,20 +90,18 @@ def update_maintenance(
     maintenance_update: UpdateMaintenanceDTO,  # Incoming update data
     db: Session = Depends(get_db)
 ):
-    # Fetch the maintenance record
+
     maintenance = db.query(Maintenance).filter(Maintenance.id == maintenance_id).first()
 
     if not maintenance:
         raise HTTPException(status_code=404, detail="Maintenance not found")
 
-    # Dynamically update the fields based on the incoming data
     for key, value in maintenance_update.dict(exclude_unset=True).items():
         setattr(maintenance, key, value)
 
-    db.commit()  # Commit the changes
-    db.refresh(maintenance)  # Refresh to get the updated record
+    db.commit()
+    db.refresh(maintenance)
 
-    # Return the updated record in the response
     return ResponseMaintenanceDTO(
         id=maintenance.id,
         carId=maintenance.carId,
@@ -134,36 +122,35 @@ def delete_maintenance(maintenance_id: int, db: Session = Depends(get_db)):
     return {"detail": "Maintenance deleted successfully"}
 
 
-# Helper function to get the number of days in a given month
 def get_days_in_month(year: int, month: int) -> int:
     """Returns the number of days in a given month, considering leap years."""
     if month == 2:  # February
         return 29 if is_leap_year(year) else 28
     elif month in [4, 6, 9, 11]:  # April, June, September, November
         return 30
-    else:  # January, March, May, July, August, October, December
+    else:
         return 31
 
 
 @router.get("/maintenance/monthlyRequestsReport", response_model=List[MonthlyRequestsReportDTO])
 async def get_monthly_report(
-        garageId: int = Query(..., description="The ID of the garage"),  # Accept as string
-        startMonth: str = Query(..., description="Start month in 'YYYY-MM' format"),
-        endMonth: str = Query(..., description="End month in 'YYYY-MM' format"),
+        garageId: int = Query(..., description="ID of garage"),  # Accept as string
+        startMonth: str = Query(..., description="'YYYY-MM' format"),
+        endMonth: str = Query(..., description="'YYYY-MM' format"),
         db: Session = Depends(get_db)
 ):
     # Convert garageId to an integer
     try:
         garage_id_int = int(garageId)  # Convert the string to an integer
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid garageId format. It should be an integer.")
+        raise HTTPException(status_code=400, detail=" integer.")
 
     # Parse the start and end months into integers for year and month
     try:
         start_year, start_month_num = map(int, startMonth.split("-"))
         end_year, end_month_num = map(int, endMonth.split("-"))
     except ValueError:
-        raise HTTPException(status_code=400, detail="Start month and end month must be in 'YYYY-MM' format.")
+        raise HTTPException(status_code=400, detail="'YYYY-MM' format.")
 
     reports = []
 
