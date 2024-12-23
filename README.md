@@ -19,7 +19,6 @@ pip install alembic sqlalchemy fastapi uvicorn databases pymysql
 ```bash
 mysql -u root -p
 CREATE DATABASE car_api;
-EXIT;
 ```
 
 
